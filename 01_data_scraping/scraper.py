@@ -5,13 +5,13 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 
-city_ids = pd.read_excel(os.getcwd()+r"//OneDrive\Desktop\opoznienia_pociagow\02_data_scraping//miasta_slownik.xlsx")\
+city_ids = pd.read_excel(r"/../data/miasta_slownik.xlsx")\
     .iloc[:,1]\
         .to_list()
 
 def get_trains():
 
-    parent_dir = os.path.join(r"C:\Users\wpiel\OneDrive\Desktop\opoznienia_pociagow\02_data_scraping\data")
+    parent_dir = os.path.join(r"..../data")
     directory = "import_"+str(datetime.now().strftime("%d%m%Y"))
     new_path = os.path.join(parent_dir,directory)
     os.mkdir(new_path)
@@ -68,7 +68,7 @@ def scrape_data():
         runTime = x[1]
         if x and current_time == str(runTime):
             pd.read_html(x[0])[0]\
-                .to_excel(fr"C:\Users\wpiel\OneDrive\Desktop\opoznienia_pociagow\02_data_scraping\data\import_{current_folder_name}\save_{time_to_save}_file_{rand_suffix}.xlsx",index=False)
+                .to_excel(fr"...\data\import_{current_folder_name}\save_{time_to_save}_file_{rand_suffix}.xlsx",index=False)
 
 get_trains()
 schedule.every(24).hours.do(get_trains)
