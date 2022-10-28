@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 
-city_ids = pd.read_excel(os.getcwd()+r"//OneDrive\Desktop\opoznienia_pociagow\02_data_scraping//miasta_slownik.xlsx")\
+city_ids = pd.read_excel(r"../miasta_slownik.xlsx")\
     .iloc[:,1]\
         .to_list()
 
@@ -64,7 +64,7 @@ def scrape_data():
             runTime = x[1]
             if x and current_time == str(runTime):
                 pd.read_html(x[0])[0]\
-                    .to_excel(fr"C:\Users\wpiel\OneDrive\Desktop\opoznienia_pociagow\02_data_scraping\data\save_{time_to_save}_file_{rand_suffix}.xlsx",index=False)
+                    .to_parquet(fr"...\data\save_{time_to_save}_file_{rand_suffix}.parquet",index=False)
     except ValueError:
         pass
 
