@@ -5,18 +5,14 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from urllib.request import Request, urlopen
 
-city_ids = pd.read_excel(r"/../data/miasta_slownik.xlsx")\
+city_ids = pd.read_excel(os.getcwd()+r"//OneDrive\Desktop\opoznienia_pociagow\02_data_scraping//miasta_slownik.xlsx")\
     .iloc[:,1]\
         .to_list()
 
 def get_trains():
-
-    parent_dir = os.path.join(r"..../data")
-    directory = "import_"+str(datetime.now().strftime("%d%m%Y"))
-    new_path = os.path.join(parent_dir,directory)
-    os.mkdir(new_path)
-
+    
     global scraping_schedule_list
+    
     all_links = []
 
     for i in city_ids:
@@ -41,37 +37,39 @@ def get_trains():
             plan_arrive.append((end_date+timedelta(hours=24)).strftime("%d.%m.%Y %H:%M:%S"))
         else:
             plan_arrive.append(end_date.strftime("%d.%m.%Y %H:%M:%S"))
-        
-        
+    
     temp_table_sorted = pd.DataFrame(zip(all_links,plan_arrive),columns=("href","arrive_date"))
-
+    
     for x in range(len(temp_table_sorted)):
         temp_table_sorted.iloc[x,1] = (pd.to_datetime(temp_table_sorted.iloc[x,1]) + timedelta(seconds=int(np.random.choice(np.arange(-55,60,2))))).strftime("%d.%m.%Y %H:%M:%S")
-    
-    temp_table_sorted = temp_table_sorted\
+        
+    temp_table_sorted = temp_table_sorted[
+        (pd.to_datetime(temp_table_sorted["arrive_date"])>datetime.now()) &
+        (pd.to_datetime(temp_table_sorted["arrive_date"])<datetime.now()+timedelta(hours=24))]\
             .sort_values("arrive_date")
-
+    
     scraping_schedule_list = list(zip(temp_table_sorted["href"].to_list(),temp_table_sorted["arrive_date"].to_list()))
     
     return scraping_schedule_list
 
 def scrape_data():
+    try:
+        current_time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        time_to_save = current_time\
+            .replace(".","")\
+            .replace(":","")
+        rand_suffix = str(np.random.choice(np.arange(0,10000),1).item())
     
-    current_time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-    current_folder_name = str(datetime.now().strftime("%d%m%Y"))
-    time_to_save = current_time\
-        .replace(".","")\
-        .replace(":","")
-    rand_suffix = str(np.random.choice(np.arange(0,10000),1).item())
-    
-    for x in scraping_schedule_list:
-        runTime = x[1]
-        if x and current_time == str(runTime):
-            pd.read_html(x[0])[0]\
-                .to_parquet(fr"...\data\import_{current_folder_name}\save_{time_to_save}_file_{rand_suffix}.parquet",index=False)
+        for x in scraping_schedule_list:
+            runTime = x[1]
+            if x and current_time == str(runTime):
+                pd.read_html(x[0])[0]\
+                    .to_excel(fr"C:\Users\wpiel\OneDrive\Desktop\opoznienia_pociagow\02_data_scraping\data\save_{time_to_save}_file_{rand_suffix}.xlsx",index=False)
+    except ValueError:
+        pass
 
 get_trains()
-schedule.every(24).hours.do(get_trains)
+schedule.every().day.at("10:00").do(get_trains)
 schedule.every(0.01).minutes.do(scrape_data)
 
 while True:
