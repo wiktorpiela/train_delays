@@ -51,7 +51,7 @@ kable(cities,
 
 ## Zasada działania algorytmu zbierania danych
 
-Zbieranie danych takiej skali i ilości to nie może odbywać się manualnie. Interesuje nas bowiem zebranie jak największej ilości danych w wybranym okresie oraz obszarze. Nawet ograniczając się do samej próby - codziennie w Polsce odbywają się setki kursów, w ciągu dnia, a także w nocy. Trudno zatem wyobrazić sobie, żeby ktoś całą dobę zajmował się tylko pozyskiwaniem tych danych i to przez pewien okres czasu. Ponadto, często zdarza się sytuacja, że kilka pociagów kończy bieg dokładnie o tej samej godzinie w różnych cześciach kraju, a strona przechowuje informacje tylko o aktywnych połączeniach, zatem znikają informacje o nich po godzinie przyjazdu. Ten fakt tym bardziej uniemożliwia ręczne scrapowanie danych.
+Zbieranie danych takiej skali i ilości nie może odbywać się manualnie. Interesuje nas bowiem zebranie jak największej ilości danych w wybranym okresie oraz obszarze. Nawet ograniczając się do samej próby - codziennie w Polsce odbywają się setki kursów, w ciągu dnia, a także w nocy. Trudno zatem wyobrazić sobie, żeby ktoś całą dobę zajmował się tylko pozyskiwaniem tych danych i to przez pewien okres czasu. Ponadto, często zdarza się sytuacja, że kilka pociagów kończy bieg dokładnie o tej samej godzinie w różnych cześciach kraju, a strona przechowuje informacje tylko o aktywnych połączeniach, zatem znikają informacje o nich po godzinie przyjazdu. Ten fakt tym bardziej uniemożliwia ręczne scrapowanie danych.
 
 W tym celu zaprojektowany został schemat pozyskiwania danych wraz z narzędziem zaimplementowanym w języku Python -  <https://github.com/wiktorpiela/train_delays/blob/main/01_data_scraping/scraper.py>
 
