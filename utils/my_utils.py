@@ -7,7 +7,7 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError
 
 global city_ids
-city_ids = pd.read_excel(r"C:\\Users\\wpiel\\OneDrive\\Desktop\\opoznienia_pociagow\\02_data_scraping/miasta_slownik.xlsx")\
+city_ids = pd.read_excel(r".../miasta_slownik.xlsx")\
 .iloc[:,1]\
     .to_list()
 
@@ -81,7 +81,7 @@ def get_scraped_data():
     import pandas as pd
     import numpy as np
     
-    parent_path = os.getcwd()+"\\02_data_scraping"
+    parent_path = os.getcwd()+"\\folder_with_scraped_data"
     subfolders = [item for item in next(os.walk(parent_path))[1] if "scraper_" in item]
     data_folders = "data"
 
