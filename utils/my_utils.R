@@ -8,15 +8,15 @@ get_station_coordinates <- function(data_path){
   data <- fs::dir_ls(data_path) %>% 
     map(.f = function(data_path) arrow::read_parquet(data_path))
   
-  data <- reduce(data, bind_rows)
+  relacje <- character()
+  stacje <- vector("list",length(data))
   
-  relacje_stacje <- data %>% 
-    group_by(Relacja) %>% 
-    summarise(Stacja = paste(Stacja, collapse = ","))
-  
-  stacje <- list()
-  
-  for(x in 1:nrow(relacje_stacje)) stacje[[x]] <- unique(unlist(str_split(relacje_stacje$Stacja[x],",")))
+  for(x in seq_along(data)){
+    
+    relacje[x] <- unique(data[[x]]$Relacja)
+    stacje[[x]] <- unique(data[[x]]$Stacja)
+    
+  }
 
   lon <- vector("list",length(stacje))
   lat <- vector("list",length(stacje))
@@ -59,9 +59,10 @@ get_station_coordinates <- function(data_path){
           
         }
         
-        lon[[x]][y] <- current_lon[which.min(dist)]
-        lat[[x]][y] <- current_lat[which.min(dist)]
-        address[[x]][y] <- current_address[which.min(dist)]
+        min_indx <- which.min(dist)
+        lon[[x]][y] <- current_lon[min_indx]
+        lat[[x]][y] <- current_lat[min_indx]
+        address[[x]][y] <- current_address[min_indx]
         
       }
     }
