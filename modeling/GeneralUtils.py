@@ -1,32 +1,10 @@
 import pandas as pd
-import numpy as np
 from geopy.geocoders import Nominatim
-from dotenv import load_dotenv
 from typing import List
 import requests
 import os
+from dotenv import load_dotenv
 load_dotenv()
-
-def prepare_raw_data(df:pd.DataFrame):
-    df['Przyjazd planowy'] = np.where(df['Przyjazd planowy'].isnull(), df['Odjazd planowy'], df['Przyjazd planowy'])
-    df['Odjazd planowy'] = np.where(df['Odjazd planowy'].isnull(), df['Przyjazd planowy'], df['Odjazd planowy'])
-
-    df['Data'] = pd.to_datetime(df['Data'], format='%d.%m.%Y')
-    df['Przyjazd planowy'] = pd.to_datetime(df['Przyjazd planowy'], format='%H:%M:%S').dt.time
-    df['Odjazd planowy'] = pd.to_datetime(df['Odjazd planowy'], format='%H:%M:%S').dt.time
-
-    df['arrival_on_time'] = pd.to_datetime(df['Data'].astype(str) + ' ' + df['Przyjazd planowy'].astype(str))
-    df['departure_on_time'] = pd.to_datetime(df['Data'].astype(str) + ' ' + df['Odjazd planowy'].astype(str))
-
-    for col in ["Opóźnienie przyjazdu", "Opóźnienie odjazdu"]:
-        df[col] = df[col].str.replace("min", "")
-        df[col] = df[col].str.replace("---", "0")
-        df[col] = df[col].str.strip()
-        df[col] = pd.to_numeric(df[col])
-
-    df.drop(['Data', 'Przyjazd planowy', 'Odjazd planowy', 'Numer pociągu'], axis=1, inplace=True)
-
-    return df
 
 def osm_geocoder(string_location_list:List[str]):
     nom = Nominatim(user_agent=os.environ['MY_AGENT'])
@@ -58,7 +36,6 @@ def google_maps_geocoder(string_location_list:List[str]):
     long_list = []
 
     for i in range(len(string_location_list)):
-
         lookup_place = f'{string_location_list[i]}, Railway Station'
         params = {'key': api_key, 'address': lookup_place}
         response = requests.get(url, params=params).json()
@@ -79,3 +56,4 @@ def google_maps_geocoder(string_location_list:List[str]):
         'lon': long_list}
     )
     return df_out
+
