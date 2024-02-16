@@ -56,8 +56,51 @@ def count_distances(main_df, gps_df):
         temp_df['distance_from_start'] = temp_df['distance_to_prev_station'].cumsum()
         temp_df['distance_to_final'] = np.array(temp_df['distance_from_start'][::-1])
         temp_df['full_route_distance'] = temp_df.groupby('pk')['distance_to_prev_station'].transform('sum')
-
         dfs_list.append(temp_df)
 
     new_data = pd.concat(dfs_list, ignore_index=True)
     return new_data
+
+def fix_dates(df, col_name):
+    pks = df['pk'].unique()
+    dfs_list = []
+    np_day = np.timedelta64(1, 'D')
+    for pk in pks:
+        df_temp = df[df['pk'] == pk]
+        dates = df_temp[col_name].values
+        date_change_flg = False
+
+        for i in range(1, len(dates)):
+            prev_date = dates[i - 1]
+            curr_date = dates[i]
+
+            if (curr_date - prev_date) / np_day < 0:
+                date_change_flg = True
+                change_on = i
+                break
+
+        if date_change_flg:
+            new_dates = dates.copy()
+            new_dates[change_on:] += pd.Timedelta(days=1)
+            df_temp[col_name] = new_dates
+
+        dfs_list.append(df_temp)
+    new_data = pd.concat(dfs_list, ignore_index=True)
+    return new_data
+
+
+
+
+
+
+
+
+
+    # df[data_col_name_end] = np.where(
+    #     (df[data_col_name_end] - df[data_col_name_start]).dt.total_seconds() / 60 < 0,
+    #     df[data_col_name_end] + timedelta(days=1),
+    #     df[data_col_name_end]
+    # )
+
+
+    return df
