@@ -88,19 +88,22 @@ def fix_dates(df, col_name):
     new_data = pd.concat(dfs_list, ignore_index=True)
     return new_data
 
+def apply_date_features(data):
+    # days until christmas (bank holiday)
+    christmas_date = pd.to_datetime('2022-12-25')
+    data['days_until_christmas'] = (christmas_date - data['arrival_on_time']).dt.days
 
+    # weekdays - OHE
+    data['weekday'] = data['arrival_on_time'].dt.strftime('%A')
+    weekday_dummies = pd.get_dummies(data['weekday'], prefix='weekday', dtype=float)
+    data = pd.concat([data.drop('weekday', axis=1), weekday_dummies], axis=1)
 
+    # trigonometric
+    data['hour_angle_sin'] = np.sin(data['arrival_on_time'].dt.hour / 24 * 2 * np.pi)
+    data['weekday_angle_sin'] = np.sin(data['arrival_on_time'].dt.dayofweek / 7 * 2 * np.pi)
+    data['monthday_angle_sin'] = np.sin(data['arrival_on_time'].dt.day / 30 * 2 * np.pi)
+    data['yearday_angle_sin'] = np.sin(data['arrival_on_time'].dt.dayofyear / 365 * 2 * np.pi)
+    data['weekyear_angle_sin'] = np.sin(data['arrival_on_time'].dt.isocalendar().week / 52 * 2 * np.pi)
+    data['month_angle_sin'] = np.sin(data['arrival_on_time'].dt.month / 12 * 2 * np.pi)
 
-
-
-
-
-
-    # df[data_col_name_end] = np.where(
-    #     (df[data_col_name_end] - df[data_col_name_start]).dt.total_seconds() / 60 < 0,
-    #     df[data_col_name_end] + timedelta(days=1),
-    #     df[data_col_name_end]
-    # )
-
-
-    return df
+    return data
