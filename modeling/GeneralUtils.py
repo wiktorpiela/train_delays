@@ -57,3 +57,10 @@ def google_maps_geocoder(string_location_list:List[str]):
     )
     return df_out
 
+def get_historical_weather(latitude, longitude, date):
+    api_key=os.environ['WEATHER_API_KEY']
+    url = f"http://api.weatherapi.com/v1/history.json?key={api_key}&q={latitude},{longitude}&dt={date}"
+    response = requests.get(url)
+    data = response.json()
+    return data
+
