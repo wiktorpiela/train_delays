@@ -18,7 +18,7 @@ def make_ml_target(df):
 
     return df
 
-def make_dummies(df, col_to_dummy):
-    dummies = pd.get_dummies(df[col_to_dummy], prefix=col_to_dummy, dtype=float)
+def make_dummies(df, col_to_dummy, prefix_name):
+    dummies = pd.get_dummies(df[col_to_dummy], prefix=prefix_name, dtype=float)
     df = pd.concat([df.drop(col_to_dummy, axis=1), dummies], axis=1)
     return df
