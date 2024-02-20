@@ -22,11 +22,11 @@ def prepare_raw_data(df:pd.DataFrame):
     df.drop(['Data', 'Przyjazd planowy', 'Odjazd planowy', 'Numer pociągu'], axis=1, inplace=True)
     return df
 
-def count_distances(main_df, gps_df):
+def count_distances(main_df, gps_df, big_city_names_filepath):
     pks = main_df['pk'].unique()
     dfs_list = []
 
-    big_city_names = pd.read_csv('../data/big_cities_dict.csv', sep=';')['miasto'].unique()
+    big_city_names = pd.read_csv(big_city_names_filepath, sep=';')['miasto'].unique()
     big_city_stations_gps = gps_df[gps_df['Stacja'].isin(big_city_names)].reset_index(drop=True).copy()
 
     for pk in pks:
