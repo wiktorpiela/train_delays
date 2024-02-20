@@ -57,10 +57,25 @@ def google_maps_geocoder(string_location_list:List[str]):
     )
     return df_out
 
-def get_historical_weather(latitude, longitude, date):
+def get_historical_weather(location_df):
     api_key=os.environ['WEATHER_API_KEY']
-    url = f"http://api.weatherapi.com/v1/history.json?key={api_key}&q={latitude},{longitude}&dt={date}"
-    response = requests.get(url)
-    data = response.json()
-    return data
+    location_df['date'] = pd.to_datetime(location_df['date']).dt.date
+    #location_df['formatted_datetime'] = location_df['datetime'].apply(lambda x: x.strftime('%Y-%m-%dT%H:%M:%S'))
+    weather_dfs_list = []
+    for i in range(len(location_df)):
+        lat = location_df.loc[i, 'lat']
+        lon = location_df.loc[i, 'lon']
+        date = location_df.loc[i, 'date']
+        url = f'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/{lat},{lon}/{date}/{date}?unitGroup=metric&key={api_key}'
+        response = requests.get(url)
+        data = pd.DataFrame(response.json()['days'][0]['hours'])
+        data.insert(0,'date', date)
+        data.insert(0, 'lon', lon)
+        data.insert(0, 'lat', lat)
+        weather_dfs_list.append(data)
+        print(i/len(location_df)*100)
+
+    location_df = pd.concat(weather_dfs_list, ignore_index=True)
+
+    return location_df
 
