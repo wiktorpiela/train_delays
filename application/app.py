@@ -1,9 +1,14 @@
 from flask import Flask, jsonify
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from flask_jwt import JWT, jwt_required
+from secure import authenticate, identity
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'mysecretkey'
+
 api = Api(app)
+jwt = JWT(app, authenticate, identity)
 CORS(app)
 
 books = []
@@ -31,12 +36,13 @@ class BookView(Resource):
         return {'note': 'delete unsuccessful'}
 
 class AllNames(Resource):
+    @jwt_required()
     def get(self):
         return {'books': books}
 
 api.add_resource(TestView, '/')
 api.add_resource(AllNames, '/all-names/')
-api.add_resource(BookView, '/books/')
+api.add_resource(BookView, '/books/<string:title>/')
 
 
 if __name__ == '__main__':
