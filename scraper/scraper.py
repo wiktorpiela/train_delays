@@ -1,5 +1,5 @@
 import schedule, time
-from utils.ScrapringUtils import get_trains, scrape_data
+from utils.ScrapingUtils import get_trains, scrape_data
 
 get_trains()
 schedule.every().day.at("00:00").do(get_trains)
