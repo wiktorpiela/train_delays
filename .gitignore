@@ -3,3 +3,6 @@ data
 .idea
 .env
 __pycache__
+data.sqlite
+modeling/_old
+modeling/.ipynb_checkpoints
