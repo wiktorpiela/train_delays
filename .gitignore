@@ -7,3 +7,5 @@ data.sqlite
 modeling/_old
 modeling/.ipynb_checkpoints
 modeling/catboost_info
+*.pkl
+*.pickle
