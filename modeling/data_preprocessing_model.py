@@ -9,10 +9,9 @@ import joblib
 
 data = pd.read_parquet('../data/prepared_data_with_weather.parquet')
 data = make_ml_target(data)
-data = data[MODEL_FEATURES + ['ML_TARGET']]
 
 y = data['ML_TARGET'].values
-X = data.drop('ML_TARGET', axis=1)
+X = data[MODEL_FEATURES]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=123)
 
 numeric_features = X_train.select_dtypes(include=['number']).columns
