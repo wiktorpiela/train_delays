@@ -5,6 +5,9 @@ import utils.PreprocessingUtils as utils
 data = pd.read_parquet('../data/raw_data_delays.parquet')
 gps = pd.read_csv('../data/station_gps.csv')
 
+# select only specific routes
+data = utils.get_specific_routes(data, 1000)
+
 data = utils.prepare_raw_data(data)
 data = pd.merge(data, gps, on='Stacja', how='left')
 
