@@ -66,6 +66,6 @@ MODEL_FEATURES = [
     'solarradiation', 
     'solarenergy', 
     'uvindex', 
-    'conditions', 
-    'icon',
+    # 'conditions', 
+    # 'icon',
 ]
