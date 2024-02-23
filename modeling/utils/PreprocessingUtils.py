@@ -107,3 +107,40 @@ def apply_date_features(data):
     data['month_angle_sin'] = np.sin(data['arrival_on_time'].dt.month / 12 * 2 * np.pi)
 
     return data
+
+def get_specific_routes(df, limit):
+    grouped = df.groupby('pk')['Stacja'].agg(list).reset_index()
+    grouped['sorted_stations'] = grouped['Stacja'].apply(lambda x: sorted(x))
+
+    df = pd.merge(df, grouped[['pk', 'sorted_stations']], how='left', on='pk')
+    df['sorted_stations'] = df['sorted_stations'].apply(lambda x: '_'.join(x))
+
+    storted_stations_count = df.groupby('sorted_stations')['pk'].size().to_frame().reset_index()
+    stations_to_select = storted_stations_count[storted_stations_count['pk']>=limit]['sorted_stations'].tolist()
+
+    df = df[df['sorted_stations'].isin(stations_to_select)].reset_index(drop=True)
+    df.drop('sorted_stations', axis=1, inplace=True)
+    return df
+
+def get_route_names(df):
+    grouped = df.groupby('pk')['Stacja'].agg(list).reset_index()
+    grouped['sorted_stations'] = grouped['Stacja'].apply(lambda x: sorted(x))
+
+    df = pd.merge(df, grouped[['pk', 'sorted_stations']], how='left', on='pk')
+    df['sorted_stations'] = df['sorted_stations'].apply(lambda x: '_'.join(x))
+    return df
+
+def fix_polish_chars(pattern):
+    polish_characters = {
+    'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n',
+    'ó': 'o', 'ś': 's', 'ż': 'z', 'ź': 'z',
+    'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N',
+    'Ó': 'O', 'Ś': 'S', 'Ż': 'Z', 'Ź': 'Z'
+    }
+
+    string_with_replaced_chars = "".join(polish_characters.get(char, char) for char in pattern)
+    return string_with_replaced_chars
+    
+
+
+
