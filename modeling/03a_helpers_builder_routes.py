@@ -21,3 +21,14 @@ routes = routes\
     .merge(stations_gps, how='left', left_on='Station_B', right_on='Stacja')\
     .drop(['Stacja_x','Stacja_y'], axis=1)\
     .rename(columns={'geometry_x':'geometry_A', 'geometry_y':'geometry_B'})
+
+geoms = ['geometry_A','geometry_B']
+suffixes = ['A', 'B']
+
+for suffix, geom in zip(suffixes, geoms):
+    routes[f'lat{suffix}'] = routes[geom].apply(lambda point: point.y)
+    routes[f'lon{suffix}'] = routes[geom].apply(lambda point: point.x)
+
+routes.drop(columns=geoms,inplace=True)
+routes.to_parquet('../data/routes_empty.parquet', index=False)
+routes[['latA','lonA','latB','lonB']].to_csv('../data/coordinates_to_js.csv',index=False)
