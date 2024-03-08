@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 from haversine import haversine, Unit
+from shapely.geometry import Point, LineString, Polygon
+import geopandas as gpd
+import warnings
+warnings.filterwarnings("ignore")
 
 def prepare_raw_data(df:pd.DataFrame):
     df['Przyjazd planowy'] = np.where(df['Przyjazd planowy'].isnull(), df['Odjazd planowy'], df['Przyjazd planowy'])
@@ -18,6 +22,28 @@ def prepare_raw_data(df:pd.DataFrame):
         df[col] = df[col].str.replace("---", "0")
         df[col] = df[col].str.strip()
         df[col] = pd.to_numeric(df[col])
+
+    df['Numer pociągu'] = df['Numer pociągu'].str.split().str[0]
+
+    train_type_mapping = {
+        'ECE': 'EuroCity',
+        'EIE': 'Intercity', 'EIJ': 'Intercity',
+        'ENE': 'EuroNight',
+        'MHE': 'InterVoivodeshipExpressHotel', 'MHS': 'InterVoivodeshipExpressHotel',
+        'MME': 'InternationalExpress', 'MMM': 'InternationalExpress',
+        'MOE': 'InterVoivodeshipStopping', 'MOJ': 'InterVoivodeshipStopping', 'MOM': 'InterVoivodeshipStopping',
+        'MPE': 'InterVoivodeshipExpress', 'MPJ': 'InterVoivodeshipExpress', 'MPM': 'InterVoivodeshipExpress', 'MPS': 'InterVoivodeshipExpress',
+        'RAJ': 'LocalAglomeration', 'RAM': 'LocalAglomeration',
+        'RMJ': 'LocalInternational', 'RMM': 'LocalInternational',
+        'ROE': 'LocalDomestic', 'ROJ': 'LocalDomestic', 'ROM': 'LocalDomestic', 'ROS': 'LocalDomestic',
+        'RPE': 'LocalDomesticExpress', 'RPJ': 'LocalDomesticExpress', 'RPM': 'LocalDomesticExpress', 'RPS': 'LocalDomesticExpress'
+    }
+
+    traction_type_electric = ['ECE', 'EIE', 'EIJ', 'ENE', 'MHE', 'MME', 'MOE', 'MOJ', 'MPE', 'MPJ', 'RAJ', 'RMJ', 'ROE', 'ROJ', 'RPE']
+    traction_type_combustion = ['MHS', 'MMM', 'MOM', 'MPM', 'MPS', 'RAM', 'RMM', 'ROM', 'ROS', 'RPJ', 'RPM', 'RPS']
+
+    df['train_type'] = df['Numer pociągu'].map(train_type_mapping)
+    df['traction_type'] = np.where(df['Numer pociągu'].isin(traction_type_electric), 'electric', 'combustion') 
 
     df.drop(['Data', 'Przyjazd planowy', 'Odjazd planowy', 'Numer pociągu'], axis=1, inplace=True)
     return df
@@ -60,6 +86,37 @@ def count_distances(main_df, gps_df, big_city_names_filepath):
 
     new_data = pd.concat(dfs_list, ignore_index=True)
     return new_data
+
+def count_distances_new(main_df, railroads):
+    pks = main_df['pk'].unique()
+    dfs_list = []
+    buffer_dist = 0.05
+
+    for pk in pks:
+        temp_df = main_df[main_df['pk'] == pk].reset_index(drop=True).copy()
+        fitted_routes = []
+        route_dist_km = []
+        for i in range(1, len(temp_df)):
+            prev_station = temp_df.loc[i-1, 'geometry_station'].buffer(buffer_dist)
+            curr_station = temp_df.loc[i, 'geometry_station'].buffer(buffer_dist)
+
+            for route in railroads:
+                if route.intersects(prev_station) and route.intersects(curr_station):
+                    difference_line = route.difference(prev_station.union(curr_station))
+                    fitted_routes.append(difference_line)
+
+            route_gdf = gpd.GeoDataFrame(geometry=diff_lines)
+            route_gdf.crs = "EPSG:4326"
+            route_gdf_projected = route_gdf.to_crs("EPSG:32610")
+            total_distance_km = route_gdf_projected.geometry.length.sum() / 1000
+            route_dist_km.append(total_distance_km)
+
+            
+
+            
+
+
+
 
 def fix_dates(df, col_name):
     pks = df['pk'].unique()
@@ -140,6 +197,26 @@ def fix_polish_chars(pattern):
 
     string_with_replaced_chars = "".join(polish_characters.get(char, char) for char in pattern)
     return string_with_replaced_chars
+
+def join_spatial_data(df, voivodeships, counties, boroughs):
+    df['geometry'] = [Point(xy) for xy in zip(df['lon'], df['lat'])]
+    df = gpd.GeoDataFrame(df, crs="EPSG:4326")
+
+    joined_voivodeships = gpd.sjoin(df, voivodeships[['geometry', 'JPT_NAZWA_']], how="left", op="within").drop('index_right', axis=1)
+    joined_voivodeships_counties = gpd.sjoin(joined_voivodeships, counties[['geometry', 'JPT_NAZWA_']], how="left", op="within").drop('index_right', axis=1)
+    joined_voivodeships_counties_boroughs = gpd.sjoin(joined_voivodeships_counties, boroughs[['geometry', 'JPT_NAZWA_']], how="left", op="within").drop('index_right', axis=1)
+
+    joined_voivodeships_counties_boroughs.rename(columns={
+        'JPT_NAZWA__left': 'voivodeship',
+        'JPT_NAZWA__right': 'county',
+        'JPT_NAZWA_': 'borough',
+        'geometry': 'geometry_station'
+    }, inplace=True)
+
+    joined_voivodeships_counties_boroughs['voivodeship'] = joined_voivodeships_counties_boroughs['voivodeship'].fillna('zagranica')
+    
+    return joined_voivodeships_counties_boroughs
+    
     
 
 
