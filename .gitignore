@@ -10,3 +10,4 @@ modeling/catboost_info
 *.pkl
 *.pickle
 cache
+.ipynb_checkpoints
