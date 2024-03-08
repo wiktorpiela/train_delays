@@ -19,8 +19,8 @@ def osm_geocoder(string_location_list:List[str]):
             lat_list.append(res.latitude)
             long_list.append(res.longitude)
         else:
-            lat_list.append(0.0)
-            long_list.append(0.0)
+            lat_list.append(-1.0)
+            long_list.append(-1.0)
 
     df_out = pd.DataFrame({
         'Stacja':string_location_list,
@@ -44,8 +44,8 @@ def google_maps_geocoder(string_location_list:List[str]):
             lat = response['results'][0]['geometry']['location']['lat']
             lng = response['results'][0]['geometry']['location']['lng']
         except IndexError:
-            lat = 0
-            lng = 0
+            lat = -1.0
+            lng = -1.0
 
         lat_list.append(lat)
         long_list.append(lng)
