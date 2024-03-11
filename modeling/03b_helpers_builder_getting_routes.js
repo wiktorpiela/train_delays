@@ -1,8 +1,10 @@
 const fileInput = document.querySelector(".file-input");
 const reqUrl = "https://routes.googleapis.com/directions/v2:computeRoutes"
-let gpsArray = [];
 let rowArray = [];
-let polylineArray = [];
+let gpsArray = [];
+let routesEncodedArray = [];
+let routesDistance = [];
+let routesDuration = [];
 
 function handleReceivedData(inputData) {
     // const header = Object.keys(inputData).toString();
@@ -78,69 +80,62 @@ const getRoute = async (url, latitudeA, longitudeA, latitudeB, longitudeB) => {
         body: JSON.stringify(reqBody)
     })
 
-    response.json().then(data => handleReceivedData(data))
+    response.json().then(data => {
+        if (data.hasOwnProperty("routes")) {
+            encodedPoyline = data.routes[0].polyline.encodedPolyline
+            distanceRoute = data.routes[0].distanceMeters
+            durationRoute = data.routes[0].duration
+        } else {
+            encodedPoyline = ''
+            distanceRoute = ''
+            durationRoute = ''
+        }
+
+        routesEncodedArray.push(encodedPoyline)
+        routesDistance.push(distanceRoute)
+        routesDuration.push(durationRoute)
+    })
 }
 
+fileInput.addEventListener('change', () => {
 
-getRoute(reqUrl, 51.111358, 15.293541, 51.266085, 15.569587)
+    const myFile = fileInput.files[0];
+    const reader = new FileReader()
 
+    reader.readAsText(myFile)
 
+    reader.onload = (event) => {
 
+        let csvdata = event.target.result
+        let rowdata = csvdata.split('\n')
 
+        for (let i = 1; i < rowdata.length - 1; i++) {
+            for (let j = 0; j < 4; j++) {
+                let row = rowdata[i].split(',')[j].replace(/\r/g, '');
+                row = parseFloat(row)
+                rowArray.push(row)
+            }
+            gpsArray.push(rowArray);
+            rowArray = [];
+        }
 
-// fileInput.addEventListener('change', () => {
-
-//     const myFile = fileInput.files[0];
-//     const reader = new FileReader()
-
-//     reader.readAsText(myFile)
-
-//     reader.onload = (event) => {
-
-//         let csvdata = event.target.result
-//         let rowdata = csvdata.split('\n')
-
-//         for (let i = 1; i < rowdata.length - 1; i++) {
-//             for (let j = 0; j < 4; j++){
-//                 let row = rowdata[i].split(',')[j].replace(/\r/g, '');
-//                 row = parseFloat(row)
-//                 rowArray.push(row)
-//             }
-//             gpsArray.push(rowArray);
-//             rowArray = [];
-//         }
-
-//         //console.log(gpsArray)
-//         gpsArray.forEach((item) => {
-//             console.log(item[0])
-//         })
-//     }
-// })
+        //console.log(gpsArray)
 
 
+        gpsArray.forEach((item) => {
+            getRoute(reqUrl, item[0], item[1], item[2], item[3])
+        })
 
+        console.log(gpsArray)
+        console.log(routesEncodedArray)
+        console.log(routesDistance)
+        console.log(routesDuration)
+
+    }
+})
 
 
 
 
-// fetch(url, {
-//     method: "POST",
-//     headers: {
-//         "Content-Type": "application/json",
-//         "X-Goog-Api-Key": "AIzaSyCAau_6aJ3wCQ-IIp_PbSWLRDAmJ9bh6OU",
-//         "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
-//     },
-//     body: JSON.stringify(reqBody)
-// }).then((response) => {
-//     return response.json();
-// }).then((data) => {
-//     if (data.hasOwnProperty("error")) {
-//         console.log(data.error);
-//     } else if (data.hasOwnProperty("routes")) {
-//         console.log(data);
-//     } else {
-//         console.log("No routes found. Something might be wrong with request data");
-//     }
-// }).catch((error) => {
-//     console.log(error)
-// });
+
+
