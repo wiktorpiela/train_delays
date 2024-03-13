@@ -1,21 +1,37 @@
 import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Point
 import numpy as np
 import utils.PreprocessingUtils as utils
 
+### LOAD DATA ---
 data = pd.read_parquet('../data/raw_data_delays.parquet')
 gps = pd.read_csv('../data/station_gps.csv')
+poland_borders = gpd.read_file('../data/spatial_data/A00_Granice_panstwa.shp', encoding='utf-8')
+voivodeship_borders = gpd.read_file('../data/spatial_data/A01_Granice_wojewodztw.shp', encoding='utf-8')
+county_borders = gpd.read_file('../data/spatial_data/A02_Granice_powiatow.shp', encoding='utf-8')
+borough_borders = gpd.read_file('../data/spatial_data/A03_Granice_gmin.shp', encoding='utf-8')
+railroads = gpd.read_file('../data/spatial_data/A03_Granice_gmin.shp')
+level_crossings = gpd.read_file('../data/spatial_data/level_crossings.shp')
+platforms = gpd.read_file('../data/spatial_data/platforms.shp')
+switches = gpd.read_file('../data/spatial_data/switches.shp')
 
-# select only specific routes
-data = utils.get_specific_routes(data, 1000)
-
+### prepare data from further processing, join stations GPS
 data = utils.prepare_raw_data(data)
 data = pd.merge(data, gps, on='Stacja', how='left')
+
+### join spatial data - voivodeships, counties, borough names
+data = utils.join_spatial_data(data, voivodeship_borders, county_borders, borough_borders)
 
 ### station count
     # full route station count
     # station count on current station
 data['station_count_on_curr_station'] = data.groupby(['pk', 'Relacja']).cumcount()
 data['full_route_station_count'] = data.groupby(['pk', 'Relacja'])['Relacja'].transform('count')
+
+
+
+
 
 ### distances
     # full route distance
@@ -24,6 +40,10 @@ data['full_route_station_count'] = data.groupby(['pk', 'Relacja'])['Relacja'].tr
     # distance to final station
     # distance distance from the nearest big city station
 data = utils.count_distances(data, gps, '../data/big_cities_dict.csv')
+
+
+
+
 
 ### date features and holidays
 cols = ['arrival_on_time','departure_on_time']
