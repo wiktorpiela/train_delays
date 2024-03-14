@@ -2,10 +2,9 @@ const fileInput = document.querySelector(".file-input");
 const reqUrl = "https://routes.googleapis.com/directions/v2:computeRoutes"
 let rowArray = [];
 let gpsArray = [];
-const routesEncodedArray = new Array();
+let routesEncodedArray = [];
 let routesDistanceArray = [];
 let routesDurationArray = [];
-
 let outputArray = [];
 
 function downloadCSV(array, filename) {
@@ -71,7 +70,7 @@ const getRoute = async (url, latitudeA, longitudeA, latitudeB, longitudeB) => {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-Api-Key": "AIzaSyCAau_6aJ3wCQ-IIp_PbSWLRDAmJ9bh6OU",
+            "X-Goog-Api-Key": "My_KEY",
             "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
         },
         body: JSON.stringify(reqBody)
@@ -130,38 +129,27 @@ fileInput.addEventListener('change', () => {
 
         })
 
-        // time.sleep(10)
+        setTimeout(()=>{
 
-        console.log(routesEncodedArray)
-        console.log(routesEncodedArray[0])
-        console.log(routesEncodedArray[1])
+            for (let i = 0; i < gpsArray.length; i++) {
 
-        routesEncodedArray.forEach((item) => {
-            console.log(item)
-        })
+                rowArray.push(gpsArray[i][0])
+                rowArray.push(gpsArray[i][1])
+                rowArray.push(gpsArray[i][2])
+                rowArray.push(gpsArray[i][3])
+    
+                rowArray.push(routesEncodedArray[i])
+                rowArray.push(routesDistanceArray[i])
+                rowArray.push(routesDurationArray[i])
+    
+                outputArray.push(rowArray);
+                rowArray = [];
+            }
+    
+            downloadCSV(outputArray, 'encodedPolylines.csv');
 
-
-
-
-        for (let i = 0; i < gpsArray.length; i++) {
-
-            rowArray.push(gpsArray[i][0])
-            rowArray.push(gpsArray[i][1])
-            rowArray.push(gpsArray[i][2])
-            rowArray.push(gpsArray[i][3])
-
-            rowArray.push(routesEncodedArray[i])
-            rowArray.push(routesDistanceArray[i])
-            rowArray.push(routesDurationArray[i])
-
-            outputArray.push(rowArray);
-            rowArray = [];
-        }
-
-        downloadCSV(outputArray, 'encodedPolylines.csv');
-
-        console.log(outputArray);
-
+        }, 10000)
+    
     }
 })
 
