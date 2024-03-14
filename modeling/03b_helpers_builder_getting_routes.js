@@ -2,9 +2,10 @@ const fileInput = document.querySelector(".file-input");
 const reqUrl = "https://routes.googleapis.com/directions/v2:computeRoutes"
 let rowArray = [];
 let gpsArray = [];
-let routesEncodedArray = [];
+const routesEncodedArray = new Array();
 let routesDistanceArray = [];
 let routesDurationArray = [];
+
 let outputArray = [];
 
 function downloadCSV(array, filename) {
@@ -70,26 +71,32 @@ const getRoute = async (url, latitudeA, longitudeA, latitudeB, longitudeB) => {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-Goog-Api-Key": "MY_KEY",
+            "X-Goog-Api-Key": "AIzaSyCAau_6aJ3wCQ-IIp_PbSWLRDAmJ9bh6OU",
             "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
         },
         body: JSON.stringify(reqBody)
     })
 
     response.json().then(data => {
+
+        let encodedPolylineStr;
+        let distanceRouteStr;
+        let durationRouteStr;
+
         if (data.hasOwnProperty("routes")) {
-            encodedPoyline = data.routes[0].polyline.encodedPolyline
-            distanceRoute = data.routes[0].distanceMeters
-            durationRoute = data.routes[0].duration
+            encodedPolylineStr = data.routes[0].polyline.encodedPolyline
+            distanceRouteStr = data.routes[0].distanceMeters
+            durationRouteStr = data.routes[0].duration
         } else {
-            encodedPoyline = ''
-            distanceRoute = ''
-            durationRoute = ''
+            encodedPolylineStr = ''
+            distanceRouteStr = ''
+            durationRouteStr = ''
         }
 
-        routesEncodedArray.push(encodedPoyline)
-        routesDistanceArray.push(distanceRoute)
-        routesDurationArray.push(durationRoute)
+        routesEncodedArray.push(encodedPolylineStr)
+        routesDistanceArray.push(distanceRouteStr)
+        routesDurationArray.push(durationRouteStr)
+
     })
 }
 
@@ -117,22 +124,26 @@ fileInput.addEventListener('change', () => {
 
         //console.log(gpsArray)
 
-        console.log(typeof routesEncodedArray)
-        let x = [0,1,2,3,4];
-        console.log(typeof x)
-        console.log(x)
-        console.log(x[0])
-        console.log(routesEncodedArray[0])
-
+        let output;
         gpsArray.forEach((item) => {
-            getRoute(reqUrl, item[0], item[1], item[2], item[3])
+            output = getRoute(reqUrl, item[0], item[1], item[2], item[3])
+
+        })
+
+        // time.sleep(10)
+
+        console.log(routesEncodedArray)
+        console.log(routesEncodedArray[0])
+        console.log(routesEncodedArray[1])
+
+        routesEncodedArray.forEach((item) => {
+            console.log(item)
         })
 
 
-        console.log(typeof routesEncodedArray)
-        console.log(routesEncodedArray)
 
-        for(let i=0; i<gpsArray.length; i++){
+
+        for (let i = 0; i < gpsArray.length; i++) {
 
             rowArray.push(gpsArray[i][0])
             rowArray.push(gpsArray[i][1])
