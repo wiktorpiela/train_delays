@@ -9,11 +9,28 @@ let outputArray = [];
 
 function downloadCSV(array, filename) {
 
-    const csvContent = array.map(row => row.join(',')).join('\n');
+    const csvContent = array.map(row => row.join('###MYRANDOMDELIMITER###')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+function download1DArray(array, filename) {
+    const arrayAsString = array.join('\n');
+    const blob = new Blob([arrayAsString], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
     link.setAttribute('href', url);
     link.setAttribute('download', filename);
 
@@ -66,37 +83,46 @@ const getRoute = async (url, latitudeA, longitudeA, latitudeB, longitudeB) => {
         }
     };
 
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": "My_KEY",
-            "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
-        },
-        body: JSON.stringify(reqBody)
-    })
+    try {
 
-    response.json().then(data => {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": "MY_KEY",
+                "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
+            },
+            body: JSON.stringify(reqBody)
+        })
 
-        let encodedPolylineStr;
-        let distanceRouteStr;
-        let durationRouteStr;
+        response.json().then(data => {
 
-        if (data.hasOwnProperty("routes")) {
-            encodedPolylineStr = data.routes[0].polyline.encodedPolyline
-            distanceRouteStr = data.routes[0].distanceMeters
-            durationRouteStr = data.routes[0].duration
-        } else {
-            encodedPolylineStr = ''
-            distanceRouteStr = ''
-            durationRouteStr = ''
-        }
+            let encodedPolylineStr;
+            let distanceRouteStr;
+            let durationRouteStr;
 
-        routesEncodedArray.push(encodedPolylineStr)
-        routesDistanceArray.push(distanceRouteStr)
-        routesDurationArray.push(durationRouteStr)
+            if (data.hasOwnProperty("routes")) {
+                encodedPolylineStr = data.routes[0].polyline.encodedPolyline
+                distanceRouteStr = data.routes[0].distanceMeters
+                durationRouteStr = data.routes[0].duration
+            } else {
+                encodedPolylineStr = ''
+                distanceRouteStr = ''
+                durationRouteStr = ''
+            }
 
-    })
+            routesEncodedArray.push(encodedPolylineStr)
+            routesDistanceArray.push(distanceRouteStr)
+            routesDurationArray.push(durationRouteStr)
+
+        })
+
+    } catch (error) {
+        console.log('Error fetching route:', error);
+        routesEncodedArray.push('');
+        routesDistanceArray.push('');
+        routesDurationArray.push('');
+    }
 }
 
 fileInput.addEventListener('change', () => {
@@ -129,27 +155,35 @@ fileInput.addEventListener('change', () => {
 
         })
 
-        setTimeout(()=>{
+        setTimeout(() => {
 
-            for (let i = 0; i < gpsArray.length; i++) {
+            // for (let i = 0; i < gpsArray.length; i++) {
 
-                rowArray.push(gpsArray[i][0])
-                rowArray.push(gpsArray[i][1])
-                rowArray.push(gpsArray[i][2])
-                rowArray.push(gpsArray[i][3])
-    
-                rowArray.push(routesEncodedArray[i])
-                rowArray.push(routesDistanceArray[i])
-                rowArray.push(routesDurationArray[i])
-    
-                outputArray.push(rowArray);
-                rowArray = [];
-            }
-    
-            downloadCSV(outputArray, 'encodedPolylines.csv');
+            //     rowArray.push(gpsArray[i][0])
+            //     rowArray.push(gpsArray[i][1])
+            //     rowArray.push(gpsArray[i][2])
+            //     rowArray.push(gpsArray[i][3])
 
-        }, 10000)
-    
+            //     rowArray.push(routesEncodedArray[i])
+            //     rowArray.push(routesDistanceArray[i])
+            //     rowArray.push(routesDurationArray[i])
+
+            //     outputArray.push(rowArray);
+            //     rowArray = [];
+            // }
+
+            // downloadCSV(outputArray, 'encodedPolylines.csv');
+
+            // console.log(routesEncodedArray)
+            // console.log(routesDistanceArray)
+            // console.log(routesDurationArray)
+
+            download1DArray(routesEncodedArray, 'encodedPolylines.csv')
+            download1DArray(routesDistanceArray, 'routesDistance.csv')
+            download1DArray(routesDurationArray, 'routesDuration.csv')
+
+        }, 200000)
+
     }
 })
 
