@@ -79,7 +79,7 @@ const getRoute = async (url, latitudeA, longitudeA, latitudeB, longitudeB) => {
         },
         "travelMode": "TRANSIT",
         "transitPreferences": {
-            allowedTravelModes: ["TRAIN"]
+            allowedTravelModes: ["TRAIN", 'LIGHT RAIL', 'RAIL']
         }
     };
 
