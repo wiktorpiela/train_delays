@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from geopy.geocoders import Nominatim
 from typing import List
 import requests
@@ -78,4 +79,61 @@ def get_historical_weather(location_df):
     location_df = pd.concat(weather_dfs_list, ignore_index=True)
 
     return location_df
+
+def get_route_attributes(latA:float, lonA:float, latB:float, lonB:float):
+
+    req_body = {
+        "origin": {
+            "location": {
+                "latLng": {
+                    "latitude": latA,
+                    "longitude": lonA
+                    }
+                }
+            },
+
+        "destination": {
+            "location": {
+                "latLng": {
+                    "latitude": latB,
+                    "longitude": lonB
+                    }
+                }
+            },
+            
+        "travelMode": "TRANSIT",
+        "transitPreferences": {
+            "allowedTravelModes": ["TRAIN", "RAIL"]
+            }
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": os.environ['GOOGLE_MAPS_API_KEY'],
+        "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline"
+    }
+
+    response = requests.post("https://routes.googleapis.com/directions/v2:computeRoutes", json=req_body, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        if "error" in data:
+            print(data["error"])
+            distance, duration, encoded_polyline = np.nan, np.nan, np.nan
+
+        elif "routes" in data:
+            distance = data['routes'][0]['distanceMeters']
+            duration = data['routes'][0]['duration']
+            encoded_polyline = data['routes'][0]['polyline']['encodedPolyline']
+
+        else:
+            print("No routes found. Something might be wrong with request data")
+            distance, duration, encoded_polyline = np.nan, np.nan, np.nan
+            
+    else:
+        print("Error:", response.status_code)
+        distance, duration, encoded_polyline = np.nan, np.nan, np.nan
+
+    return (distance, duration, encoded_polyline)
 
