@@ -4,7 +4,13 @@ from haversine import haversine, Unit
 from shapely.geometry import Point, LineString, Polygon
 import geopandas as gpd
 import warnings
+from itertools import chain
+from typing import List
 warnings.filterwarnings("ignore")
+
+def flat_list(two_dim_list:List):
+    one_d_list = list(chain(*two_dim_list))
+    return one_d_list
 
 def prepare_raw_data(df:pd.DataFrame):
     df['Przyjazd planowy'] = np.where(df['Przyjazd planowy'].isnull(), df['Odjazd planowy'], df['Przyjazd planowy'])
