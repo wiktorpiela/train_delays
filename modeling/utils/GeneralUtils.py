@@ -124,7 +124,7 @@ def get_route_attributes(latA:float, lonA:float, latB:float, lonB:float):
 
         elif "routes" in data:
             distance = data['routes'][0]['distanceMeters']
-            duration = data['routes'][0]['duration']
+            duration = float(data['routes'][0]['duration'].replace('s',''))
             encoded_polyline = data['routes'][0]['polyline']['encodedPolyline']
 
         else:
