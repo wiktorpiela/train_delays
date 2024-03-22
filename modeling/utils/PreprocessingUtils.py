@@ -12,6 +12,15 @@ def flat_list(two_dim_list:List):
     one_d_list = list(chain(*two_dim_list))
     return one_d_list
 
+def unique_list_preserve_order(x):
+    seen = set()
+    unique_items = []
+    for item in x:
+        if item not in seen:
+            unique_items.append(item)
+            seen.add(item)
+    return unique_items
+
 def prepare_raw_data(df:pd.DataFrame):
     df['Przyjazd planowy'] = np.where(df['Przyjazd planowy'].isnull(), df['Odjazd planowy'], df['Przyjazd planowy'])
     df['Odjazd planowy'] = np.where(df['Odjazd planowy'].isnull(), df['Przyjazd planowy'], df['Odjazd planowy'])
