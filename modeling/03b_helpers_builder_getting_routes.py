@@ -1,10 +1,9 @@
 import pandas as pd
 import geopandas as gpd
 import numpy as np
-import polyline
-from shapely.geometry import LineString
 from utils.GeneralUtils import get_route_attributes
-from utils.PreprocessingUtils import flat_list, unique_list_preserve_order
+from utils.PreprocessingUtils import unique_list_preserve_order, polylines_decoder
+from haversine import haversine, Unit
 
 data = pd.read_parquet('../data/raw_data_delays.parquet')
 stations_gps = gpd.read_file('../data/spatial_data/stations_gps.shp', encoding='utf-8')
@@ -48,6 +47,10 @@ for rel in relations:
             encoded_polyline = np.nan
         else:
             distance, duration, encoded_polyline = get_route_attributes(prev_lat, prev_lon, curr_lat, curr_lon)   # f'test{i}', f'test{i}', f'test{i}'
+
+        # if route not found - calculate haversine distance
+        if pd.isnull(distance):
+            disctance = haversine((prev_lat, prev_lon), (curr_lat, curr_lon), unit=Unit.METERS)
 
         temp_df.at[i, 'distances'] = distance
         temp_df.at[i, 'durations'] = duration
