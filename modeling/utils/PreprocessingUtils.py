@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 from haversine import haversine, Unit
-from shapely.geometry import Point, LineString, Polygon
+import polyline
+from shapely.geometry import Point, LineString
 import geopandas as gpd
 import warnings
 from itertools import chain
@@ -20,6 +21,13 @@ def unique_list_preserve_order(x):
             unique_items.append(item)
             seen.add(item)
     return unique_items
+
+def polylines_decoder(df:pd.DataFrame):
+    df['decoded_polylines'] = df.apply(lambda row: [(row['lon'], row['lat'])] if row['encoded_polylines'] is None else polyline.decode(row['encoded_polylines'], geojson=True), axis=1)
+    decoded_polylines_list = df['decoded_polylines'].to_list()
+    decoded_polylines_list_flat = flat_list(decoded_polylines_list)
+    route_linestring = LineString(decoded_polylines_list_flat)
+    return df, route_linestring
 
 def prepare_raw_data(df:pd.DataFrame):
     df['Przyjazd planowy'] = np.where(df['Przyjazd planowy'].isnull(), df['Odjazd planowy'], df['Przyjazd planowy'])
