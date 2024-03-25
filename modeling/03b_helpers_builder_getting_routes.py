@@ -24,6 +24,7 @@ new_df['lon'] = new_df['geometry'].apply(lambda row: row.x)
 relations = new_df['key'].unique()
 
 df_out_list = []
+linestring_list = []
 n=0
 
 for rel in relations:
@@ -61,5 +62,18 @@ for rel in relations:
 
     temp_df.replace({None:np.nan}, inplace=True)
 
+    temp_df, temp_line = polylines_decoder(temp_df)
+    linestring_list.append(temp_line)
+
     df_out_list.append(temp_df)
     n+=1
+
+routes_linestrings = gpd.GeoDataFrame({
+    'route_name': relations,
+    'geometry':linestring_list
+})
+routes_linestrings.to_file('../data/routes_linestrings.shp', encoding='utf-8', index=False)
+
+routes_data = pd.concat(df_out_list, ignore_index=True)
+routes_data.to_parquet('../data/routes_data_all.parquet', index=False)
+
