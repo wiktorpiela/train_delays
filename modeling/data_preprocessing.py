@@ -1,97 +1,41 @@
 import pandas as pd
-import geopandas as gpd
-from shapely.geometry import Point
 import numpy as np
+import geopandas as gpd
 import utils.PreprocessingUtils as utils
 
-### LOAD DATA ---
+# load data
 data = pd.read_parquet('../data/raw_data_delays.parquet')
-gps = pd.read_csv('../data/station_gps.csv')
-poland_borders = gpd.read_file('../data/spatial_data/A00_Granice_panstwa.shp', encoding='utf-8')
-voivodeship_borders = gpd.read_file('../data/spatial_data/A01_Granice_wojewodztw.shp', encoding='utf-8')
-county_borders = gpd.read_file('../data/spatial_data/A02_Granice_powiatow.shp', encoding='utf-8')
-borough_borders = gpd.read_file('../data/spatial_data/A03_Granice_gmin.shp', encoding='utf-8')
-railroads = gpd.read_file('../data/spatial_data/A03_Granice_gmin.shp')
-level_crossings = gpd.read_file('../data/spatial_data/level_crossings.shp')
-platforms = gpd.read_file('../data/spatial_data/platforms.shp')
-switches = gpd.read_file('../data/spatial_data/switches.shp')
+stations_gps = gpd.read_file('../data/spatial_data/stations_gps.shp', encoding='utf-8')
 
-### prepare data from further processing, join stations GPS
+# prepare raw data and join stations gps
 data = utils.prepare_raw_data(data)
-data = pd.merge(data, gps, on='Stacja', how='left')
+data = pd.merge(data, stations_gps, on='Stacja', how='left')
 
-### join spatial data - voivodeships, counties, borough names
-data = utils.join_spatial_data(data, voivodeship_borders, county_borders, borough_borders)
+data['lat'] = data['geometry'].apply(lambda row: row.y)
+data['lon'] = data['geometry'].apply(lambda row: row.x)
+data.drop('geometry', axis=1, inplace=True)
 
-### station count
-    # full route station count
-    # station count on current station
+# station count
 data['station_count_on_curr_station'] = data.groupby(['pk', 'Relacja']).cumcount()
 data['full_route_station_count'] = data.groupby(['pk', 'Relacja'])['Relacja'].transform('count')
 
+# get routes info
+idxs = [i for i in range(5)]
+idxs.append(7)
+routes_data = pd.read_parquet('../data/routes_data_all.parquet').iloc[:, idxs]
 
+dfs_out = []
+pks = data['pk'].unique()
 
+for pk in pks:
+    temp_df = data[data['pk']==pk].copy().reset_index(drop=True)
 
+    key1 = temp_df.groupby('Relacja')['Stacja'].agg(utils.unique_list_preserve_order).index.item()
+    key2 = ', '.join(temp_df.groupby('Relacja')['Stacja'].agg(utils.unique_list_preserve_order)[0])
+    key = f'{key1}_{key2}'
+    temp_df['key'] = key
 
-### distances
-    # full route distance
-    # distance distance until current station
-    # distance from start station
-    # distance to final station
-    # distance distance from the nearest big city station
-data = utils.count_distances(data, gps, '../data/big_cities_dict.csv')
+    temp_df = temp_df.merge(routes_data, how='left', on=['key', 'Relacja', 'Stacja', 'lat', 'lon'])
+    temp_df.drop('key', axis=1, inplace=True)
 
-
-
-
-
-### date features and holidays
-cols = ['arrival_on_time','departure_on_time']
-for col in cols:
-    data = utils.fix_dates(data, col)
-    
-data = utils.apply_date_features(data)
-
-### longer stop duration
-data['stop_duration'] = (data['departure_on_time'] - data['arrival_on_time']).dt.total_seconds()/60
-for i in range(1, 7):
-    data[f'stop_duration_lag{i}'] = data.groupby(['pk','Relacja'])['stop_duration'].transform(lambda x: x.shift(i))
-    data[f'stop_duration_lag{i}'] = data[f'stop_duration_lag{i}'].fillna(-1)
-    
-### apply weather data
-weather = pd.read_parquet('../data/weather_data.parquet')
-weather.drop(columns=['stations','source','tzoffset','datetimeEpoch'], inplace=True)
-weather['datetime_merge'] = pd.to_datetime(weather['date'].astype(str) + ' ' + weather['datetime'].astype(str))
-
-data['datetime_merge'] = data['arrival_on_time'].dt.floor('H')
-
-data = pd.merge(
-    data,
-    weather,
-    how='left',
-    on=['lat', 'lon', 'datetime_merge']
-).drop(columns=['date','datetime_merge', 'datetime'])
-
-### fixing weather cols
-#### snow, windgust, visibility, solarradiation, solarenergy, uvindex
-# cols_to_fix = ['snow','windgust','visibility','solarradiation','solarenergy','uvindex']
-# for col in cols_to_fix:
-#     data[col] = data[col].fillna(-1)
-
-#### preciptype
-data['preciptype'] = data['preciptype'].fillna('None')
-data['preciptype'] = data['preciptype'].apply(lambda x: '_'.join(map(str, x)) if isinstance(x, np.ndarray) else x)
-# preciptype_dummies = pd.get_dummies(data['preciptype'], prefix='preciptype', dtype=float)
-# data = pd.concat([data.drop('preciptype', axis=1), preciptype_dummies], axis=1)
-
-#### conditions
-data['conditions'] = data['conditions'].str.replace(', ', '_').str.replace(',', '_').str.replace(' ', '_')
-# condition_dummies = pd.get_dummies(data['conditions'], dtype=float, prefix="conditions")
-# data = pd.concat([data.drop('conditions', axis=1), condition_dummies], axis=1)
-
-#### icon
-# icon_dummies = pd.get_dummies(data['icon'], dtype=float, prefix="icon")
-# data = pd.concat([data.drop('icon', axis=1), icon_dummies], axis=1)
-
-# save data
-data.to_parquet('../data/prepared_data_with_weather.parquet')
+    dfs_out.append(temp_df)
