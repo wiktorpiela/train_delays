@@ -239,6 +239,12 @@ def join_spatial_data(df, voivodeships, counties, boroughs):
     joined_voivodeships_counties_boroughs['voivodeship'] = joined_voivodeships_counties_boroughs['voivodeship'].fillna('zagranica')
     
     return joined_voivodeships_counties_boroughs
+
+def geometry_point_to_lat_lon(df):
+    df['lat'] = df['geometry'].apply(lambda row: row.y)
+    df['lon'] = df['geometry'].apply(lambda row: row.x)
+    df.drop('geometry', axis=1, inplace=True)
+    return df
     
     
 
