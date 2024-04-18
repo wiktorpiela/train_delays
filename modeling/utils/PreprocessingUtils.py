@@ -280,6 +280,15 @@ def geometry_point_to_lat_lon(df):
     df['lon'] = df['geometry'].apply(lambda row: row.x)
     df.drop('geometry', axis=1, inplace=True)
     return df
+
+def convert_to_geometry(coords):
+    if len(coords) == 1:
+        return Point(coords[0])
+    else:
+        return LineString(coords)
+    
+def create_small_polygon(point, distance):
+    return point.buffer(distance)
     
     
 
