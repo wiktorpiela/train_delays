@@ -169,22 +169,57 @@ def fix_dates(df, col_name):
     return new_data
 
 def apply_date_features(data):
-    # days until christmas (bank holiday)
-    christmas_date = pd.to_datetime('2022-12-25')
-    data['days_until_christmas'] = (christmas_date - data['arrival_on_time']).dt.days
-
     # weekdays - OHE
-    data['weekday'] = data['arrival_on_time'].dt.strftime('%A')
-    weekday_dummies = pd.get_dummies(data['weekday'], prefix='weekday', dtype=float)
-    data = pd.concat([data.drop('weekday', axis=1), weekday_dummies], axis=1)
+    # data['weekday'] = data['arrival_on_time'].dt.strftime('%A')
+    # weekday_dummies = pd.get_dummies(data['weekday'], prefix='weekday', dtype=float)
+    # data = pd.concat([data.drop('weekday', axis=1), weekday_dummies], axis=1)
 
-    # trigonometric
-    data['hour_angle_sin'] = np.sin(data['arrival_on_time'].dt.hour / 24 * 2 * np.pi)
-    data['weekday_angle_sin'] = np.sin(data['arrival_on_time'].dt.dayofweek / 7 * 2 * np.pi)
-    data['monthday_angle_sin'] = np.sin(data['arrival_on_time'].dt.day / 30 * 2 * np.pi)
-    data['yearday_angle_sin'] = np.sin(data['arrival_on_time'].dt.dayofyear / 365 * 2 * np.pi)
-    data['weekyear_angle_sin'] = np.sin(data['arrival_on_time'].dt.isocalendar().week / 52 * 2 * np.pi)
-    data['month_angle_sin'] = np.sin(data['arrival_on_time'].dt.month / 12 * 2 * np.pi)
+    # Applying trigonometric transformations
+    data['month'] = data['arrival_on_time'].dt.month
+    data['weekofyear'] = data['arrival_on_time'].dt.isocalendar().week
+    data['yearday'] = data['arrival_on_time'].dt.dayofyear
+    data['monthday'] = data['arrival_on_time'].dt.day
+    data['weekday'] = data['arrival_on_time'].dt.dayofweek
+    data['hour'] = data['arrival_on_time'].dt.hour
+    data['minute'] = data['arrival_on_time'].dt.minute
+    data['second'] = data['arrival_on_time'].dt.second
+
+    data['month_sin'] = np.sin(2 * np.pi * data['month'] / 12)
+    data['month_cos'] = np.cos(2 * np.pi * data['month'] / 12)
+
+    data['weekofyear_sin'] = np.sin(2 * np.pi * data['weekofyear'] / 52)
+    data['weekofyear_cos'] = np.cos(2 * np.pi * data['weekofyear'] / 52)
+
+    data['yearday_sin'] = np.sin(2 * np.pi * data['yearday'] / 365)
+    data['yearday_cos'] = np.cos(2 * np.pi * data['yearday'] / 365)
+
+    data['monthday_sin'] = np.sin(2 * np.pi * data['monthday'] / 31)
+    data['monthday_cos'] = np.cos(2 * np.pi * data['monthday'] / 31)
+
+    data['weekday_sin'] = np.sin(2 * np.pi * data['weekday'] / 7)
+    data['weekday_cos'] = np.cos(2 * np.pi * data['weekday'] / 7)
+
+    data['hour_sin'] = np.sin(2 * np.pi * data['hour'] / 24)
+    data['hour_cos'] = np.cos(2 * np.pi * data['hour'] / 24)
+
+    data['minute_sin'] = np.sin(2 * np.pi * data['minute'] / 60)
+    data['minute_cos'] = np.cos(2 * np.pi * data['minute'] / 60)
+
+    data['second_sin'] = np.sin(2 * np.pi * data['second'] / 60)
+    data['second_cos'] = np.cos(2 * np.pi * data['second'] / 60)
+
+    data.drop(['month', 'weekofyear', 'yearday', 'monthday', 'weekday', 'hour', 'minute', 'second'], axis=1, inplace=True)
+
+    # bank holidays ---
+    def days_until_bank_holiday(row, month, day, datetime_col_name):
+        current_year = row[datetime_col_name].year
+        bank_holiday_date = pd.to_datetime(f'{current_year}-{month}-{day}')
+        return (bank_holiday_date - row[datetime_col_name]).days
+    
+    data['days_until_christmas'] = data.apply(lambda row: days_until_bank_holiday(row, 12, 25, 'arrival_on_time'), axis=1)
+    data['days_until_november_1_st'] = data.apply(lambda row: days_until_bank_holiday(row, 11, 1, 'arrival_on_time'), axis=1)
+    data['days_until_new_year_eve'] = data.apply(lambda row: days_until_bank_holiday(row, 12, 31, 'arrival_on_time'), axis=1)
+    data['days_until_easter'] = data.apply(lambda row: days_until_bank_holiday(row, 4, 5, 'arrival_on_time'), axis=1)
 
     return data
 
