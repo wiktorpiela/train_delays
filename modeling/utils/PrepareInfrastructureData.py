@@ -15,6 +15,23 @@ def measure_linestring_distance_inside_polygon(routes_list:List, polygon):
     route_gdf_projected = route_gdf.to_crs("EPSG:32610")
     total_distance_km = route_gdf_projected.geometry.length.sum() / 1000
     return total_distance_km
+
+def point_inside_polygon(point, polygon):
+    """
+    Check if a point is inside a polygon using ray casting algorithm.
+    """
+    x, y = point.coords[0]
+    num_intersections = 0
+    for i in range(len(polygon.exterior.coords) - 1):
+        p1 = polygon.exterior.coords[i]
+        p2 = polygon.exterior.coords[i + 1]
+        if p1[1] == p2[1]:
+            continue
+        if min(p1[1], p2[1]) <= y < max(p1[1], p2[1]):
+            x_intersect = (y - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]) + p1[0]
+            if x < x_intersect:
+                num_intersections += 1
+    return num_intersections % 2 == 1
     
 
 def get_infrastrucute_data_per_area(path_to_shp_file:str, path_to_save_output_file:str):
