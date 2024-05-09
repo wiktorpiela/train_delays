@@ -1,6 +1,6 @@
 import numpy as np
-import pandas as pd
-def make_ml_target(df):
+
+def make_ml_target_classification(df):
     df['ML_TARGET'] = np.select(
         [
             df['Opóźnienie przyjazdu'] <= 5,
@@ -16,6 +16,10 @@ def make_ml_target(df):
         ]
     )
 
+    return df
+
+def make_ml_target_regression(df):
+    df['ML_TARGET'] = np.where(df['Opóźnienie przyjazdu']<0,0,df['Opóźnienie przyjazdu'])
     return df
 
 MODEL_FEATURES = [
