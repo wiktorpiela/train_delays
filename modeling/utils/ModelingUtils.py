@@ -1,4 +1,24 @@
 import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
+
+class CustomTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, column, function):
+        self.column = column
+        self.function = function
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        X_transformed = X.copy()
+        X_transformed[self.column] = X_transformed[self.column].apply(self.function)
+        return X_transformed
+
+def transform_preciptype(x):
+    return '_'.join(map(str, x)) if isinstance(x, np.ndarray) else x
+
+def transform_conditions(x):
+    return x.replace(', ', '_').replace(',', '_').replace(' ', '_') if isinstance(x, str) else x
 
 def make_ml_target_classification(df):
     df['ML_TARGET'] = np.select(
@@ -27,8 +47,8 @@ MODEL_FEATURES = [
     'ML_TARGET',
 
     # X ---
-    'train_type',
-    'traction_type',
+    #'train_type',
+    #'traction_type',
     'station_count_on_curr_station',
     'distances',
     'durations',
@@ -74,7 +94,6 @@ MODEL_FEATURES = [
     'month_cos',
     'weekofyear_sin',
     'weekofyear_cos',
-    'weekofyear_cos',
     'yearday_sin',
     'yearday_cos',
     'monthday_sin',
@@ -93,7 +112,7 @@ MODEL_FEATURES = [
     'days_until_easter',
 
     # spatial info and railway infra data
-    'in_poland',
+    #'in_poland',
     'railway_distance_gmina',
     'stations_odometer_gmina',
     'level_crossing_odometer_gmina',
