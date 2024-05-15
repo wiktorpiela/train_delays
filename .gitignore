@@ -11,3 +11,4 @@ modeling/catboost_info
 *.pickle
 cache
 .ipynb_checkpoints
+application
