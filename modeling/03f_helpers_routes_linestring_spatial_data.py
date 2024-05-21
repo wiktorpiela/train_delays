@@ -15,4 +15,6 @@ rel.rename(columns={'decoded_polylines':'geometry'},inplace=True)
 
 rel = gpd.GeoDataFrame(rel)
 rel.crs = 4326
-rel.to_file('../data/spatial_data/relations.shp', encoding='utf-8', index=False)
+
+rel = rel.groupby('key').first().reset_index().rename(columns={'key':'route_name'}) # preserve duplicates
+rel.to_file('../data/spatial_data/routes.shp', encoding='utf-8', index=False)
